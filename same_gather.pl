@@ -1,3 +1,5 @@
+#! /usr/bin/perl
+######################################################################
 #Version : v0p1
 #Usage   : same_gather.pl  hardlink_file(HF)
 #Note	 : read file hard link and gather the same name file to one folder
