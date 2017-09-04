@@ -3,22 +3,21 @@
 #Author  : Max
 #Date    : 2017-08-03
 #Version : v0p1
-#Usage   : hardcopy.pl  hardlink_file(HF)
-#Note	 : read file hard link and copy to destination folder
-#          and should modify the destination manually.
+#Usage   : do.pl  source_file(HF)
+#Note	   : read CC-CEDICT source file and make to mdict format
 #Revision: 
-#         0.01 08.03    initial
+#         0.01 09.04    initial
 
 #######################################################################
 use File::Copy;
 use File::Basename;
 use Encode;
 use strict ;
-use utf8;
+use utf8::all;
 
-binmode(STDIN, ':encoding(utf8)');
-binmode(STDOUT, ':encoding(utf8)');
-binmode(STDERR, ':encoding(utf8)');
+#binmode(STDIN, ':encoding(utf8)');
+#binmode(STDOUT, ':encoding(utf8)');
+#binmode(STDERR, ':encoding(utf8)');
 
 my @linearray;						
 my $arraylength;
@@ -30,7 +29,7 @@ open (OUT,"> output_dict.txt ") or die "Error: Cannot open file to write\n";
 open (REPORT,"> report.log ") or die "Error: Cannot open file to write\n";
 
 foreach $line1 (<HF>){
-  $line1 = Encode::decode_utf8($line1);
+#  $line1 = Encode::decode_utf8($line1);
 	chomp ($line1);
 	next if($line1 =~ /^\s*\t*$/);			# ignore the blank line
 	next if($line1 =~ /^#.*$/);
@@ -63,9 +62,9 @@ my $pinyin_exp = '\[[^\]]+\]';
 my $all_shiyi_exp = '\/.+\/';
 print "Extract Process: "	;
 for($i=0; $i<@linearray;$i++){
-    printf "%0.5f ",($i+1)/$arraylength;
+#    printf "%0.5f ",($i+1)/$arraylength;
     $process_line = $linearray[$i];
-    $process_line = Encode::decode_utf8($process_line);
+#    $process_line = Encode::decode_utf8($process_line);
     if($process_line =~ /^($header_cht_exp) ($headr_chs_exp) ($pinyin_exp) ($all_shiyi_exp)$/){
 #        print "Process line is $process_line\n";
         $header_cht = $1;
@@ -83,7 +82,7 @@ for($i=0; $i<@linearray;$i++){
     }   
         
 }
-print "\n";
+#print "\n";
 #process explanation
 # /to split the bill/to go Dutch/
 #first "/"  --> <ul><li>
@@ -108,7 +107,8 @@ my @all_shiyi_after;
 my @shiyi_splited;
 foreach (@all_shiyi){
 #    print "$_\n";
-    $shiyi = Encode::decode_utf8($_);
+#    $shiyi = Encode::decode_utf8($_);
+    $shiyi = $_;
     #deal with "/"
     $shiyi =~ s/^\/(.*)$/\1/;
     $shiyi =~ s/^(.*)\/$/\1/;
@@ -147,7 +147,7 @@ if(!($header_cht_length==$all_shiyi_after_length)){
 }
 
 my $j;
-my $dict_style = '<head><link rel="stylesheet" type="text/css" href="cccedit.css"/></head>';
+my $dict_style = '<head><link rel="stylesheet" type="text/css" href="cccdict.css"/></head>';
 my $dict_top = '<div class="dt-all">';
 my $header_style_cht1 = '<div class="wd-tw">';
 my $header_style_cht2 = '</div>';
@@ -166,6 +166,7 @@ my $wd_cn;
 my $py;
 my $exp;
 for($j=0;$j<$header_cht_length;$j++){
+    printf "%0.5f ",($j+1)/$header_cht_length;
     $wd_tw =  $header_cht[$j];  
     $wd_cn =  $header_chs[$j];  
     $py = $pinyin[$j];
@@ -189,6 +190,7 @@ for($j=0;$j<$header_cht_length;$j++){
     }
 }
 
+print "\nProcess dict content for CC-CEDICT finished!\n";
 
 close(HF);
 close(REPORT);
