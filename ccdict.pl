@@ -1,23 +1,21 @@
 #! /usr/bin/perl
 ######################################################################
 #Author  : Max
-#Date    : 2017-08-03
-#Version : v0p1
+#Date    : 2017-09-05
+#Version : v0p2
 #Usage   : do.pl  source_file(HF)
 #Note	   : read CC-CEDICT source file and make to mdict format
 #Revision: 
 #         0.01 09.04    initial
+#         0.02 09.05    add process indicator
 
 #######################################################################
 use File::Copy;
 use File::Basename;
 use Encode;
-use strict ;
+use strict;
 use utf8::all;
 
-#binmode(STDIN, ':encoding(utf8)');
-#binmode(STDOUT, ':encoding(utf8)');
-#binmode(STDERR, ':encoding(utf8)');
 
 my @linearray;						
 my $arraylength;
@@ -60,8 +58,11 @@ my $header_cht_exp = '[a-zA-Z0-9\x{2e80}-\x{9fa5}，\%○]+';
 my $headr_chs_exp = '[a-zA-Z0-9\x{2e80}-\x{9fa5}，\%○]+';
 my $pinyin_exp = '\[[^\]]+\]';
 my $all_shiyi_exp = '\/.+\/';
-print "Extract Process: "	;
+print "Extract Process: ...\n"	;
 for($i=0; $i<@linearray;$i++){
+    if(($i%100==0)||($i==$arraylength-1)){
+    printf "%0.3f ",($i+1)/$arraylength;
+    }
 #    printf "%0.5f ",($i+1)/$arraylength;
     $process_line = $linearray[$i];
 #    $process_line = Encode::decode_utf8($process_line);
@@ -165,8 +166,11 @@ my $wd_tw;
 my $wd_cn;
 my $py;
 my $exp;
+print "\nOutput Process: ...\n"	;
 for($j=0;$j<$header_cht_length;$j++){
-    printf "%0.5f ",($j+1)/$header_cht_length;
+    if(($j % 100 ==0)||($j==$header_cht_length-1)){
+    printf "%0.3f ",($j+1)/$header_cht_length;
+    }
     $wd_tw =  $header_cht[$j];  
     $wd_cn =  $header_chs[$j];  
     $py = $pinyin[$j];
