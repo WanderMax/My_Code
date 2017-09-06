@@ -25,7 +25,7 @@ my $line2;
 open(HF,"$ARGV[0]");
 open (OUT,"> output_dict.txt ") or die "Error: Cannot open file to write\n";
 open (REPORT,"> report.log ") or die "Error: Cannot open file to write\n";
-
+print "\n####Start Index Process:####\n"	;
 my $entries;
 foreach $line1 (<HF>){
 	chomp ($line1);
@@ -63,9 +63,9 @@ my $header_cht_exp = '[a-zA-Z0-9\x{2e80}-\x{9fa5}，\%○]+';
 my $headr_chs_exp = '[a-zA-Z0-9\x{2e80}-\x{9fa5}，\%○]+';
 my $pinyin_exp = '\[[^\]]+\]';
 my $all_shiyi_exp = '\/.+\/';
-print "Extract Process: ...\n"	;
+print "\n####Extract Process:####\n"	;
 for($i=0; $i<@linearray;$i++){
-    if(($i%100==0)||($i==$arraylength-1)){
+    if(($i%500==0)||($i==$arraylength-1)){
     printf "%0.3f ",($i+1)/$arraylength;
     }
     $process_line = $linearray[$i];
@@ -91,18 +91,19 @@ print "\n";
 my $header_cht_length = @header_cht;
 my $header_chs_length = @header_chs;
 my $pinyin_length = @pinyin;
+my $all_shiyi_length = @all_shiyi;
 
 
 #process min pinyin
-print "Main PinYin Process: ...\n"	;
+print "\n#####Main PinYin Process:#####\n"	;
 my $eachpinyin;
 my $eachpinyined;
 my $py;
 my @pinyin_after;
 for ($py=0;$py<@pinyin;$py++){
-#    if(($py%100==0)||($py==$pinyin_length-1)){
-#    printf "%0.3f ",($py+1)/$pinyin_length;
-#    }
+    if(($py%500==0)||($py==$pinyin_length-1)){
+    printf "%0.3f ",($py+1)/$pinyin_length;
+    }
   $eachpinyin = $pinyin[$py];
   # [xxxxxxx]
   #remove the "[  ]"
@@ -115,7 +116,7 @@ print "\n";
 
 
 #process explanation pinyin
-print "Explanation PinYin Process: ...\n"	;
+print "\n####Explanation PinYin Process:####\n"	;
 
 my $eachitem;
 my $eachitemed;
@@ -126,8 +127,11 @@ my $pyzz;
 my $m;
 my $n;
 for($m=0;$m<@all_shiyi;$m++){
+    if(($m%500==0)||($m==$all_shiyi_length-1)){
+    printf "%0.3f ",($m+1)/$all_shiyi_length;
+    }
     $eachitem = $all_shiyi[$m];
-    print "####convert $eachitem\n";
+#    print "####convert $eachitem\n";
     #add spliter symbol "^"
     $eachitem =~ s/\[/\^\[/g;
     $eachitem =~ s/\]/\]\^/g;
@@ -145,18 +149,28 @@ for($m=0;$m<@all_shiyi;$m++){
     $eachitemed = join " ", @shiyipy_ed;
     $eachitemed =~ s/\s+\[/\[/g;
     $eachitemed =~ s/\]\s+/\]/g;
-    print "To $eachitemed\n";  
+#    print "To $eachitemed\n";  
     push @all_shiyipy_after, $eachitemed;       
      
 }
+print "\n";
 
+print "\n####Explanation Query Process####\n";
+my $all_shiyipy_after_length = @all_shiyipy_after;
+print "Explanation Index before process PinYin is $all_shiyi_length\n";
+print "Explanation Index now is $all_shiyipy_after_length\n";
+if($all_shiyipy_after_length!=$all_shiyi_length){
+  die "Explanation Index no match\n";
+  }else{
+  print "####Continue Process####\n";
+  }
 #process explanation
 # /to split the bill/to go Dutch/
 #first "/"  --> <ul><li>
 #middle "/"  --> </li><li>
 #last "/"   ---> </li></ul>
 #Chinese words --> <a href="entry://key#section">key</a>
-print "Explanation Process: ...\n"	;
+print "\n####Explanation Post Process:####\n"	;
 my $first_rep = '<ul><li>';
 my $middle_rep = '</li><li>';
 my $last_rep = '</li></ul>';
@@ -172,9 +186,12 @@ my $bracket_exp = '\([^\)]+\)';
 my $shiyi;
 my @all_shiyi_after;
 my @shiyi_splited;
-foreach (@all_shiyipy_after){
+for(my $v=0;$v<@all_shiyipy_after;$v++){
+    if(($v%500==0)||($v==$all_shiyi_length-1)){
+    printf "%0.3f ",($v+1)/$all_shiyi_length;
+    }
 #    print "$_\n";
-    $shiyi = $_;
+    $shiyi = $all_shiyipy_after[$v];
     #replace "," with ", "
     $shiyi =~s/\s*,\s*/, /g;
     #deal with "/"
@@ -200,7 +217,7 @@ foreach (@all_shiyipy_after){
     push @all_shiyi_after, $shiyi;
   }
  
-    
+print "\n";    
 
 
 
@@ -232,9 +249,9 @@ my $wd_cn;
 my $py;
 my $exp;
 my @total_index;
-print "\nOutput Process: ...\n"	;
+print "\n####Output Process:####\n"	;
 for($j=0;$j<$header_cht_length;$j++){
-    if(($j % 100 ==0)||($j==$header_cht_length-1)){
+    if(($j % 500 ==0)||($j==$header_cht_length-1)){
     printf "%0.3f ",($j+1)/$header_cht_length;
     }
     $wd_tw =  $header_cht[$j];  
@@ -262,7 +279,8 @@ for($j=0;$j<$header_cht_length;$j++){
     }
 }
 my $total_index = @total_index;
-print "\nTotal index is $total_index\n";
+print "\n\n####Report####\n";
+print "Total index is $total_index\n";
 print "Process dict content for CC-CEDICT finished!\n";
 
 
@@ -363,6 +381,7 @@ foreach (@py_chk){
         $pying =~ s/\,/\,/g;
      }else {
         print "Icorrect pattern $pying\n"; 
+        print REPORT "Icorrect pattern $pying\n"; 
      } 
      push  @return  ,$pying;
 }
