@@ -1,8 +1,8 @@
 #! /usr/bin/perl
 ######################################################################
 #Author  : Max
-#Date    : 2017-09-06
-#Version : v0p4
+#Date    : 2017-09-08
+#Version : v0p5
 #Usage   : do.pl  source_file(HF)
 #Note	   : read CC-CEDICT source file and make to mdict format
 #Revision: 
@@ -10,7 +10,7 @@
 #         0.02 09.05    add process indicator
 #         0.03 09.05    rewrite search code
 #         0.04 09.06    add pinyin convert
-
+#         0.05 09.08    improve pinyin convert
 #######################################################################
 use Encode;
 use strict;
@@ -108,7 +108,7 @@ for ($py=0;$py<@pinyin;$py++){
   # [xxxxxxx]
   #remove the "[  ]"
 #  print "Convert $eachpinyin";
-  $eachpinyined = &makepy(lc($eachpinyin));
+  $eachpinyined = &convertpy_string(lc($eachpinyin));
 #  print " To $eachpinyined\n";
   push  @pinyin_after, $eachpinyined;
 }
@@ -132,23 +132,8 @@ for($m=0;$m<@all_shiyi;$m++){
     }
     $eachitem = $all_shiyi[$m];
 #    print "####convert $eachitem\n";
-    #add spliter symbol "^"
-    $eachitem =~ s/\[/\^\[/g;
-    $eachitem =~ s/\]/\]\^/g;
-    @shiyipy_ed = ();                       #empty pushed array
-    @shiyipy = split /\^/, "$eachitem";      #spilt each explanation item to parts
-    for($n=0;$n<@shiyipy;$n++){
-        $pyzz = $shiyipy[$n];
-        if($pyzz =~/\[[a-zA-Z1-5 \,]+\]/){
-          $pyzz = &makepy(lc($pyzz));
-        }else{
-         $pyzz =$pyzz;
-        }
-        push @shiyipy_ed,$pyzz;    
-    }
-    $eachitemed = join " ", @shiyipy_ed;
-    $eachitemed =~ s/\s+\[/\[/g;
-    $eachitemed =~ s/\]\s+/\]/g;
+    $eachitemed = &convertpy_string(lc($eachitem));
+
 #    print "To $eachitemed\n";  
     push @all_shiyipy_after, $eachitemed;       
      
@@ -290,6 +275,31 @@ close(REPORT);
 close(OUT);
 
 
+
+#sub function to convert pinyin in each $string
+sub convertpy_string{
+my ($string_to_convert) = @_;
+my $string_converting;
+my $string_converted;
+my $py;
+my $pyed;
+$string_converting = $string_to_convert;
+AD:
+if($string_converting =~ /(.*)\[([a-zA-Z1-5 \,]+)\](.*)/){
+      $py = $2;
+#      print "Pinyin0 is $py\n";
+      $pyed = &makepy($py);  
+#      print "Pinyin1 is $pyed\n"; 
+#      print "----$py to $pyed----\n";  
+      $string_converting =~ s/$py/$pyed/g;
+#      print "--> $string\n";
+      goto AD;     
+    }
+    $string_converted = $string_converting;
+    return($string_converted);
+}
+
+
 #
 #TONES = { "1a":"ā", "2a":"á", "3a":"ǎ", "4a":"à", "5a":"a",
 #          "1e":"ē", "2e":"é", "3e":"ě", "4e":"è", "5e":"e",
@@ -297,12 +307,14 @@ close(OUT);
 #          "1o":"ō", "2o":"ó", "3o":"ǒ", "4o":"ò", "5o":"o",
 #          "1u":"ū", "2u":"ú", "3u":"ǔ", "4u":"ù", "5u":"u",
 #          "1v":"ǖ", "2v":"ǘ", "3v":"ǚ", "4v":"ǜ", "5v":"ü" }
+#          "2m":"", "4m":"m̀"
 #    # using v for the umlauded u
     
 sub makepy{
 my ($py) = @_;  # $chk_array is the array in sub
 my $py_chk = $py;
 my $pying;
+my $eachpinyined;
 my @return;
 # del "[ ]"
 $py_chk =~ s/\[//g;
@@ -389,7 +401,7 @@ foreach (@py_chk){
   $eachpinyined = join " ", "@return";
   $eachpinyined =~ s/^\s+|\s+$//g;
   #add back "[]"
-  $eachpinyined =~ s/^(.*)$/\[\1\]/g;
+#  $eachpinyined =~ s/^(.*)$/\[\1\]/g;
   return ($eachpinyined);
 }
 
