@@ -305,12 +305,13 @@ foreach (@dup_index){
     print REPORT "$_\n";
 }
 
+my @dict_nodup_sorted = sort @dict_nodup;
 my $kk;
-for ($kk=0;$kk<@dict_nodup;$kk++){
+for ($kk=0;$kk<@dict_nodup_sorted;$kk++){
     if(($kk % 500 ==0)||($kk==$dict_nodup_length-1)){
     printf "%0.3f ",($kk+1)/$dict_nodup_length;
     }
-    my $dcit_index = $dict_nodup[$kk];
+    my $dcit_index = $dict_nodup_sorted[$kk];
     $dcit_index =~ s/\^\^\^/\n/g;
     print OUT "$dcit_index\n";
    }
