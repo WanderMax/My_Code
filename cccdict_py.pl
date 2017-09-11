@@ -1,8 +1,8 @@
 #! /usr/bin/perl
 ######################################################################
 #Author  : Max
-#Date    : 2017-09-08
-#Version : v0p5
+#Date    : 2017-09-11
+#Version : v0p6
 #Usage   : do.pl  source_file(HF)
 #Note	   : read CC-CEDICT source file and make to mdict format
 #Revision: 
@@ -11,11 +11,13 @@
 #         0.03 09.05    rewrite search code
 #         0.04 09.06    add pinyin convert
 #         0.05 09.08    improve pinyin convert
+#         0.06 09.11    add possible no-dup feature
 #######################################################################
-use Encode;
 use strict;
 use utf8::all;
 
+unlink "output_dict.txt";
+unlink "report.log";
 
 my @linearray;						
 my $arraylength;
@@ -23,8 +25,9 @@ my $line1;
 my $line2;
 
 open(HF,"$ARGV[0]");
-open (OUT,"> output_dict.txt ") or die "Error: Cannot open file to write\n";
-open (REPORT,"> report.log ") or die "Error: Cannot open file to write\n";
+open (TMP,"> tmp_output_dict.txt") or die "Error: Cannot open file to write\n";
+open (OUT,"> output_dict.txt") or die "Error: Cannot open file to write\n";
+open (REPORT,"> report.log") or die "Error: Cannot open file to write\n";
 print "\n####Start Index Process:####\n"	;
 my $entries;
 foreach $line1 (<HF>){
@@ -205,7 +208,6 @@ for(my $v=0;$v<@all_shiyipy_after;$v++){
 print "\n";    
 
 
-
 #join the splited parts into one
 
 my $all_shiyi_after_length  = @all_shiyi_after;
@@ -234,7 +236,7 @@ my $wd_cn;
 my $py;
 my $exp;
 my @total_index;
-print "\n####Output Process:####\n"	;
+print "\n####Tmp File Process:####\n"	;
 for($j=0;$j<$header_cht_length;$j++){
     if(($j % 500 ==0)||($j==$header_cht_length-1)){
     printf "%0.3f ",($j+1)/$header_cht_length;
@@ -244,32 +246,84 @@ for($j=0;$j<$header_cht_length;$j++){
     $py = $pinyin_after[$j];
     $exp = $all_shiyi_after[$j];
     #format dict content    
-    print OUT "$wd_tw\n";
+    print TMP "$wd_tw^^^";
     push @total_index,$wd_tw; 
-    print OUT "$dict_style\n";
-    print OUT "$dict_top\n";
-    print OUT "$header_style_cht1$wd_tw$header_style_cht2\n";
-    print OUT "$header_style_chs1$wd_cn$header_style_chs2\n";
-    print OUT "$header_style_pinyin1$py$header_style_pinyin2\n";
-    print OUT "$shiyi_before$exp$shiyi_after\n";
-    print OUT "$dict_end\n";
-    print OUT "$dict_delimiter\n";
+    print TMP "$dict_style";
+    print TMP "$dict_top";
+    print TMP "$header_style_cht1$wd_tw$header_style_cht2";
+    print TMP "$header_style_chs1$wd_cn$header_style_chs2";
+    print TMP "$header_style_pinyin1$py$header_style_pinyin2";
+    print TMP "$shiyi_before$exp$shiyi_after";
+    print TMP "$dict_end^^^";
+    print TMP "$dict_delimiter\n";
 
     #link chs=header to cht-header if not same
     if($wd_tw ne $wd_cn){
-        print OUT "$wd_cn\n";
+        print TMP "$wd_cn^^^";
         push @total_index,$wd_cn; 
-        print OUT "$dict_link$wd_tw\n";
-        print OUT "$dict_delimiter\n";
+        print TMP "$dict_link$wd_tw^^^";
+        print TMP "$dict_delimiter\n";
     }
 }
 my $total_index = @total_index;
-print "\n\n####Report####\n";
-print "Total index is $total_index\n";
+#print "\n\n####Report####\n";
+print "\nTotal index (may dup) is $total_index\n";
+
+close(TMP);
+
+print "\n####Dup Checking Process:####\n"	;
+
+open(TD,"tmp_output_dict.txt");
+my $tmp_line;
+my @tmp_array;
+foreach $tmp_line (<TD>){
+	chomp ($tmp_line);
+  push @tmp_array, $tmp_line;
+ }
+my $index_tmp = @tmp_array;
+print "Reading index is $index_tmp\n";
+
+my %count1 = @tmp_array;
+my %count2 = @tmp_array;
+my @dup_index;
+my @dict_nodup;
+# grep will break the hash
+@dict_nodup = grep {++$count1{$_} < 2} @tmp_array;
+@dup_index = grep {++$count2{$_} > 1} @tmp_array;
+
+my $dict_nodup_length = @dict_nodup;
+my $dup_index_length = @dup_index;
+print "Dupped index is $dup_index_length\n";
+print "No-Dupped index is $dict_nodup_length\n";
+
+
+
+print "\n####Dict Source File Process:####\n";
+print REPORT "\n######Dupped Index#####\n";
+foreach (@dup_index){
+    $_ =~ s/\^\^\^/\n/g;
+    print REPORT "$_\n";
+}
+
+my $kk;
+for ($kk=0;$kk<@dict_nodup;$kk++){
+    if(($kk % 500 ==0)||($kk==$dict_nodup_length-1)){
+    printf "%0.3f ",($kk+1)/$dict_nodup_length;
+    }
+    my $dcit_index = $dict_nodup[$kk];
+    $dcit_index =~ s/\^\^\^/\n/g;
+    print OUT "$dcit_index\n";
+   }
+
+
+
+print "\n\nDict source file generated!\n";
 print "Process dict content for CC-CEDICT finished!\n";
 
 
 
+
+unlink "tmp_output_dict.txt";
 close(HF);
 close(REPORT);
 close(OUT);
