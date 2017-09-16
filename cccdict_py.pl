@@ -2,7 +2,7 @@
 ######################################################################
 #Author  : Max
 #Date    : 2017-09-11
-#Version : v0p6
+#Version : v0p7
 #Usage   : do.pl  source_file(HF)
 #Note	   : read CC-CEDICT source file and make to mdict format
 #Revision: 
@@ -11,7 +11,7 @@
 #         0.03 09.05    rewrite search code
 #         0.04 09.06    add pinyin convert
 #         0.05 09.08    improve pinyin convert
-#         0.06 09.11    add possible no-dup feature
+#         0.06 09.16    add possible no-dup feature
 #######################################################################
 use strict;
 use utf8::all;
@@ -446,6 +446,13 @@ foreach (@py_chk){
         $pying =~ s/(.*)u(.*)5/\1u\2/g; 
      }elsif($pying =~ /\,/){
         $pying =~ s/\,/\,/g;
+      }elsif($pying =~ /r5/){
+        $pying =~ s/r5/r/g;
+      }elsif($pying =~ /[a-z]+/){
+      $pying = $pying;
+      }elsif($pying =~ /(.*)m(.*)[1-5]+/){
+        $pying =~ s/(.*)m(.*)2/\1\\u1e3f\2/g;
+        $pying =~ s/(.*)m(.*)4/\1m̀\2/g;
      }else {
         print "Icorrect pattern $pying\n"; 
         print REPORT "Icorrect pattern $pying\n"; 
