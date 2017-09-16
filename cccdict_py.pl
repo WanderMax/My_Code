@@ -11,7 +11,8 @@
 #         0.03 09.05    rewrite search code
 #         0.04 09.06    add pinyin convert
 #         0.05 09.08    improve pinyin convert
-#         0.06 09.16    add possible no-dup feature
+#         0.06 09.11    add possible no-dup feature
+#         0.07 09.16    fix simple English word loop in pinyin --> something wrong with nodup action
 #######################################################################
 use strict;
 use utf8::all;
@@ -97,7 +98,7 @@ my $pinyin_length = @pinyin;
 my $all_shiyi_length = @all_shiyi;
 
 
-#process min pinyin
+#process main pinyin
 print "\n#####Main PinYin Process:#####\n"	;
 my $eachpinyin;
 my $eachpinyined;
@@ -110,9 +111,9 @@ for ($py=0;$py<@pinyin;$py++){
   $eachpinyin = $pinyin[$py];
   # [xxxxxxx]
   #remove the "[  ]"
-#  print "Convert $eachpinyin";
+#  print "Convert $eachpinyin\n";
   $eachpinyined = &convertpy_string(lc($eachpinyin));
-#  print " To $eachpinyined\n";
+#  print "To $eachpinyined\n";
   push  @pinyin_after, $eachpinyined;
 }
 print "\n";
@@ -201,7 +202,7 @@ for(my $v=0;$v<@all_shiyipy_after;$v++){
     $shiyi =~ s/\[/$pinyin_before/g;
     $shiyi =~ s/\]/$pinyin_end/g;
 #    print  "7 $shiyi\n";
-    print REPORT "$shiyi\n";
+#    print REPORT "$shiyi\n";
     push @all_shiyi_after, $shiyi;
   }
  
@@ -323,7 +324,7 @@ print "Process dict content for CC-CEDICT finished!\n";
 
 
 
-
+close(TD);
 unlink "tmp_output_dict.txt";
 close(HF);
 close(REPORT);
@@ -339,6 +340,7 @@ my $string_converted;
 my $py;
 my $pyed;
 $string_converting = $string_to_convert;
+#print "&convertpy_string $string_converting\n";
 AD:
 if($string_converting =~ /(.*)\[([a-zA-Z1-5 \,]+)\](.*)/){
       $py = $2;
@@ -346,10 +348,14 @@ if($string_converting =~ /(.*)\[([a-zA-Z1-5 \,]+)\](.*)/){
       $pyed = &makepy($py);  
 #      print "Pinyin1 is $pyed\n"; 
 #      print "----$py to $pyed----\n";  
-      $string_converting =~ s/$py/$pyed/g;
-#      print "--> $string\n";
+#     [--^<  ]-->^
+      $string_converting =~ s/\[$py\]/\^\<$pyed\>\^/g;
+#      print "--> $string_converting\n";
       goto AD;     
     }
+#   print "return $string_converting\n";
+    $string_converting =~ s/\^\</\[/g;
+    $string_converting =~ s/\>\^/\]/g;
     $string_converted = $string_converting;
     return($string_converted);
 }
@@ -371,31 +377,36 @@ my $py_chk = $py;
 my $pying;
 my $eachpinyined;
 my @return;
+# print "&makepy $py_chk\n";
 # del "[ ]"
 $py_chk =~ s/\[//g;
 $py_chk =~ s/\]//g;
 my @py_chk = split / /, "$py_chk";
-    
+# print "0: @py_chk\n";    
 foreach (@py_chk){
     $pying = $_;
+#    print "&makepying $pying\n";
     if($pying =~ /(.*)a(.*)([1-5]+)/){
         $pying =~ s/(.*)a(.*)1/\1ā\2/g;
         $pying =~ s/(.*)a(.*)2/\1á\2/g;
         $pying =~ s/(.*)a(.*)3/\1ǎ\2/g;
         $pying =~ s/(.*)a(.*)4/\1à\2/g;
         $pying =~ s/(.*)a(.*)5/\1a\2/g;
+#        print "1: $pying\n";
      }elsif($pying =~ /(.*)e(.*)([1-5]+)/){
         $pying =~ s/(.*)e(.*)1/\1ē\2/g;
         $pying =~ s/(.*)e(.*)2/\1é\2/g;
         $pying =~ s/(.*)e(.*)3/\1ě\2/g;
         $pying =~ s/(.*)e(.*)4/\1è\2/g;
         $pying =~ s/(.*)e(.*)5/\1e\2/g; 
+#        print "2: $pying\n";
      }elsif($pying =~ /(.*)ou(.*)([1-5]+)/){
         $pying =~ s/(.*)ou(.*)1/\1ōu\2/g;
         $pying =~ s/(.*)ou(.*)2/\1óu\2/g;
         $pying =~ s/(.*)ou(.*)3/\1ǒu\2/g;
         $pying =~ s/(.*)ou(.*)4/\1òu\2/g;
         $pying =~ s/(.*)ou(.*)5/\1ou\2/g; 
+#        print "3: $pying\n";
      }elsif($pying =~ /(.*)io(.*)([1-5]+)/){             
         $pying =~ s/(.*)io(.*)1/\1iō\2/g;
         $pying =~ s/(.*)io(.*)2/\1ió\2/g;
@@ -449,7 +460,7 @@ foreach (@py_chk){
       }elsif($pying =~ /r5/){
         $pying =~ s/r5/r/g;
       }elsif($pying =~ /[a-z]+/){
-      $pying = $pying;
+      $pying = uc($pying);                #special for English in Pinyin
       }elsif($pying =~ /(.*)m(.*)[1-5]+/){
         $pying =~ s/(.*)m(.*)2/\1\\u1e3f\2/g;
         $pying =~ s/(.*)m(.*)4/\1m̀\2/g;
@@ -462,6 +473,7 @@ foreach (@py_chk){
 
   $eachpinyined = join " ", "@return";
   $eachpinyined =~ s/^\s+|\s+$//g;
+#  print "&makepy result $eachpinyined\n";
   #add back "[]"
 #  $eachpinyined =~ s/^(.*)$/\[\1\]/g;
   return ($eachpinyined);
