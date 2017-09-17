@@ -12,7 +12,9 @@
 #         0.04 09.06    add pinyin convert
 #         0.05 09.08    improve pinyin convert
 #         0.06 09.11    add possible no-dup feature
-#         0.07 09.16    fix simple English word loop in pinyin --> something wrong with nodup action
+#         0.07 09.16    fix simple English word loop in pinyin 
+#         0.08 09.17    fix nodup issue, add release date print
+#         0.09 09.17    fix words with "·" 
 #######################################################################
 use strict;
 use utf8::all;
@@ -31,25 +33,40 @@ open (OUT,"> output_dict.txt") or die "Error: Cannot open file to write\n";
 open (REPORT,"> report.log") or die "Error: Cannot open file to write\n";
 print "\n####Start Index Process:####\n"	;
 my $entries;
+my $date_year;
+my $date_time;
 foreach $line1 (<HF>){
-	chomp ($line1);
+	chomp($line1);
+  next if($line1 =~ /^\s*\t*$/);			# ignore the blank line
+  # get original index number
 	if($line1 =~ /^#\! entries\=([0-9]+)$/){
 	  $entries = $1;
 	  next if(1);
 	}
-	next if($line1 =~ /^\s*\t*$/);			# ignore the blank line
-	next if($line1 =~ /^#.*$/);
+  # get data date
+	if($line1 =~ /^#\! date\=([0-9\-]+)T([0-9\:]+)Z$/){
+	  $date_year = $1;
+	  $date_time = $2;
+	  next if(1);
+	}
+	next if($line1 =~ /^#(.*)$/);
 	$line1 =~s/^\s+//;
 	$line1 =~s/\s+$//; 				# remove the blank at both ends of each line.
 #	print "Line is $line1\n";
 #	print LOG_R "$line1\n";
 	push @linearray , $line1;			# push the hard link into array
 	}
-	
+  
+ # foreach (@linearray) { 
+ # print REPORT "$_\n";	}
+
 $arraylength = @linearray;				# get numbers of hard link
-print "Original Index is $entries\n";
-print "Indexing Number is $arraylength.\n";
-print REPORT "Index Number is $arraylength.\n";
+print "Number of entries is $entries\n";
+print REPORT "Number of entries is $entries\n";
+print "Latest Release is $date_year $date_time GMT\n";
+print REPORT "Latest Release is $date_year $date_time GMT\n";
+print "Indexing Number is $arraylength\n";
+print REPORT "Index Number is $arraylength\n";
 
 
 my $i;
@@ -63,8 +80,8 @@ my @header_chs;
 my @pinyin;
 my @all_shiyi;
 
-my $header_cht_exp = '[a-zA-Z0-9\x{2e80}-\x{9fa5}，\%○]+';
-my $headr_chs_exp = '[a-zA-Z0-9\x{2e80}-\x{9fa5}，\%○]+';
+my $header_cht_exp = '[a-zA-Z0-9\x{2e80}-\x{9fa5}，\%○·]+';
+my $headr_chs_exp = '[a-zA-Z0-9\x{2e80}-\x{9fa5}，\%○·]+';
 my $pinyin_exp = '\[[^\]]+\]';
 my $all_shiyi_exp = '\/.+\/';
 print "\n####Extract Process:####\n"	;
@@ -170,7 +187,7 @@ my $pinyin_before = '<span class="py2">[';
 my $pinyin_end = ']</span>';
 my $bracket_before = '<span class="bra">(';
 my $bracket_end = ')</span>';
-my $ch_exp = '[a-zA-Z0-9]*[\x{2e80}-\x{9fa5}，]+';
+my $ch_exp = '[a-zA-Z0-9]*[\x{2e80}-\x{9fa5}，·]+';
 my $bracket_exp = '\([^\)]+\)';
 my $shiyi;
 my @all_shiyi_after;
@@ -283,9 +300,10 @@ foreach $tmp_line (<TD>){
  }
 my $index_tmp = @tmp_array;
 print "Reading index is $index_tmp\n";
+print REPORT "Reading index is $index_tmp\n";
 
-my %count1 = @tmp_array;
-my %count2 = @tmp_array;
+my %count1;
+my %count2;
 my @dup_index;
 my @dict_nodup;
 # grep will break the hash
@@ -295,7 +313,9 @@ my @dict_nodup;
 my $dict_nodup_length = @dict_nodup;
 my $dup_index_length = @dup_index;
 print "Dupped index is $dup_index_length\n";
+print REPORT "Dupped index is $dup_index_length\n";
 print "No-Dupped index is $dict_nodup_length\n";
+print REPORT "No-Dupped index is $dict_nodup_length\n";
 
 
 
@@ -342,7 +362,7 @@ my $pyed;
 $string_converting = $string_to_convert;
 #print "&convertpy_string $string_converting\n";
 AD:
-if($string_converting =~ /(.*)\[([a-zA-Z1-5 \,]+)\](.*)/){
+if($string_converting =~ /(.*)\[([a-zA-Z1-5 \,·]+)\](.*)/){
       $py = $2;
 #      print "Pinyin0 is $py\n";
       $pyed = &makepy($py);  
@@ -459,8 +479,12 @@ foreach (@py_chk){
         $pying =~ s/\,/\,/g;
       }elsif($pying =~ /r5/){
         $pying =~ s/r5/r/g;
+      }elsif($pying =~ /xx5/){
+        $pying =~ s/xx5/xx/g;
       }elsif($pying =~ /[a-z]+/){
       $pying = uc($pying);                #special for English in Pinyin
+      }elsif($pying =~ /·/){
+      $pying = $pying;                #special for · in Pinyin
       }elsif($pying =~ /(.*)m(.*)[1-5]+/){
         $pying =~ s/(.*)m(.*)2/\1\\u1e3f\2/g;
         $pying =~ s/(.*)m(.*)4/\1m̀\2/g;
