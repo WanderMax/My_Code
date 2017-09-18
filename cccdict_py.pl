@@ -71,6 +71,8 @@ foreach $line1 (<HF>){
  # print REPORT "$_\n";	}
 
 $arraylength = @linearray;				# get numbers of hard link
+print REPORT "#### CC-CEDICT Process Report ####\n"	;
+print REPORT "\n#### General Info ####\n"	;
 print "Number of entries is $entries\n";
 print REPORT "Number of entries is $entries\n";
 print "Latest Release is $date_year $date_time GMT\n";
@@ -89,14 +91,15 @@ my @header_cht;
 my @header_chs;
 my @pinyin;
 my @all_shiyi;
-
+my @index_missing;
 my $header_cht_exp = '[a-zA-Z0-9\x{2e80}-\x{9fa5}，\%○·]+';
 my $headr_chs_exp = '[a-zA-Z0-9\x{2e80}-\x{9fa5}，\%○·]+';
 my $pinyin_exp = '\[[^\]]+\]';
 my $all_shiyi_exp = '\/.+\/';
 print "\n#### Extract Source Process ####\n"	;
+print REPORT "\n#### Un-Extracted Index ####\n"	;
 for($i=0; $i<@linearray;$i++){
-    if(($i%500==0)||($i==$arraylength-1)){
+    if(($i%1500==0)||($i==$arraylength-1)){
     printf "%0.3f% ",100*($i+1)/$arraylength;
     }
     $process_line = $linearray[$i];
@@ -113,7 +116,8 @@ for($i=0; $i<@linearray;$i++){
         push  @all_shiyi,$all_shiyi;       
     }else{
 #       print "\nUnmatched line is $process_line\n";
-        print LOG_E "$process_line\n";
+        push @index_missing,$process_line;
+        print REPORT "$process_line\n";
     }   
         
 }
@@ -123,7 +127,15 @@ my $header_cht_length = @header_cht;
 my $header_chs_length = @header_chs;
 my $pinyin_length = @pinyin;
 my $all_shiyi_length = @all_shiyi;
-
+my $missing_index_length = @index_missing;
+print "\n#### Extract Result ####\n"	;
+print REPORT "\n#### Extract Result ####\n"	;
+print "Index Idle is $entries\n";
+print REPORT "Index Idle is $entries\n";
+print "Index Extracted is $header_cht_length\n";
+print REPORT "Index Extracted is $header_cht_length\n";
+print "Index Missing is $missing_index_length\n";
+print REPORT "Index Missing is $missing_index_length\n";
 
 #process main pinyin
 print "\n##### Main PinYin Process #####\n"	;
@@ -132,7 +144,7 @@ my $eachpinyined;
 my $py;
 my @pinyin_after;
 for ($py=0;$py<@pinyin;$py++){
-    if(($py%500==0)||($py==$pinyin_length-1)){
+    if(($py%1500==0)||($py==$pinyin_length-1)){
     printf "%0.3f% ",100*($py+1)/$pinyin_length;
     }
   $eachpinyin = $pinyin[$py];
@@ -158,7 +170,7 @@ my $pyzz;
 my $m;
 my $n;
 for($m=0;$m<@all_shiyi;$m++){
-    if(($m%500==0)||($m==$all_shiyi_length-1)){
+    if(($m%1500==0)||($m==$all_shiyi_length-1)){
     printf "%0.3f% ",100*($m+1)/$all_shiyi_length;
     }
   $eachitem = $all_shiyi[$m];
@@ -205,7 +217,7 @@ my $shiyi;
 my @all_shiyi_after;
 my @shiyi_splited;
 for(my $v=0;$v<@all_shiyipy_after;$v++){
-    if(($v%500==0)||($v==$all_shiyi_length-1)){
+    if(($v%1500==0)||($v==$all_shiyi_length-1)){
     printf "%0.3f% ",100*($v+1)/$all_shiyi_length;
     }
 #   print "$_\n";
@@ -268,7 +280,7 @@ my $exp;
 my @total_index;
 print "\n#### Tmp File Process ####\n"	;
 for($j=0;$j<$header_cht_length;$j++){
-    if(($j % 500 ==0)||($j==$header_cht_length-1)){
+    if(($j%1500 ==0)||($j==$header_cht_length-1)){
     printf "%0.3f% ",100*($j+1)/$header_cht_length;
     }
     $wd_tw =  $header_cht[$j];  
@@ -296,8 +308,8 @@ for($j=0;$j<$header_cht_length;$j++){
     }
 }
 my $total_index = @total_index;
-#print "\n\n####Report####\n";
-print "\nTotal index (may dup) is $total_index\n";
+print "\n\n#### Tmp File Report ####\n";
+print "Total Index (may dup) is $total_index\n";
 
 close(TMP);
 
@@ -311,6 +323,7 @@ foreach $tmp_line (<TD>){
   push @tmp_array, $tmp_line;
  }
 my $index_tmp = @tmp_array;
+print REPORT "\n#### No-Dup Result ####\n";
 print "Reading index is $index_tmp\n";
 print REPORT "Reading index is $index_tmp\n";
 
@@ -324,6 +337,7 @@ my @dict_nodup;
 
 my $dict_nodup_length = @dict_nodup;
 my $dup_index_length = @dup_index;
+
 print "Dupped index is $dup_index_length\n";
 print REPORT "Dupped index is $dup_index_length\n";
 print "No-Dupped index is $dict_nodup_length\n";
@@ -341,7 +355,7 @@ foreach (@dup_index){
 my @dict_nodup_sorted = sort @dict_nodup;
 my $kk;
 for ($kk=0;$kk<@dict_nodup_sorted;$kk++){
-    if(($kk % 500 ==0)||($kk==$dict_nodup_length-1)){
+    if(($kk%1500 ==0)||($kk==$dict_nodup_length-1)){
     printf "%0.3f% ",100*($kk+1)/$dict_nodup_length;
     }
     my $dcit_index = $dict_nodup_sorted[$kk];
@@ -351,9 +365,9 @@ for ($kk=0;$kk<@dict_nodup_sorted;$kk++){
 
 
 
-print "\n\nDict source file generated!\n";
-print "Process dict content for CC-CEDICT finished!\n";
-
+print "\n\nDict Source File Generated!\n";
+print "Process Dict Content for CC-CEDICT Finished!\n";
+print REPORT "#### ---End--- ####\n"	;
 
 
 close(TD);
