@@ -47,7 +47,7 @@ my $date_year;
 my $date_time;
 foreach $line1 (<HF>){
 	chomp($line1);
-  next if($line1 =~ /^\s*\t*$/);			# ignore the blank line
+  next if($line1 =~ /^\s*\t*\r*$/);			# ignore the blank line
   # get original index number
 	if($line1 =~ /^#\! entries\=([0-9]+)$/){
 	  $entries = $1;
