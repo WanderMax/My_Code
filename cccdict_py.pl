@@ -4,7 +4,7 @@
 #Date    : 2017-09-18
 #Version : v0p10
 #Usage   : do.pl  source_file(HF)
-#Note	   : read CC-CEDICT source file and make mdict format
+#Note    : read CC-CEDICT source file and make mdict format
 #Revision: 
 #         0.01 09.04    initial
 #         0.02 09.05    add process indicator
@@ -25,6 +25,12 @@ unlink "report.log";
 
 #Pinyin convert switch
 my $pyswitch = 1;
+print "\n#### Config PinYin Switch ####\n";
+if($pyswitch){
+    print "PinYin convert is ON\n";
+}else{
+    print "PinYin convert is OFF\n";
+}
 
 my @linearray;						
 my $arraylength;
@@ -35,7 +41,7 @@ open(HF,"$ARGV[0]");
 open (TMP,"> tmp_output_dict.txt") or die "Error: Cannot open file to write\n";
 open (OUT,"> output_dict.txt") or die "Error: Cannot open file to write\n";
 open (REPORT,"> report.log") or die "Error: Cannot open file to write\n";
-print "\n####Start Index Process:####\n"	;
+print "\n#### Start Index Process ####\n";
 my $entries;
 my $date_year;
 my $date_time;
@@ -88,25 +94,25 @@ my $header_cht_exp = '[a-zA-Z0-9\x{2e80}-\x{9fa5}，\%○·]+';
 my $headr_chs_exp = '[a-zA-Z0-9\x{2e80}-\x{9fa5}，\%○·]+';
 my $pinyin_exp = '\[[^\]]+\]';
 my $all_shiyi_exp = '\/.+\/';
-print "\n####Extract Process:####\n"	;
+print "\n#### Extract Source Process ####\n"	;
 for($i=0; $i<@linearray;$i++){
     if(($i%500==0)||($i==$arraylength-1)){
-    printf "%0.3f ",($i+1)/$arraylength;
+    printf "%0.3f% ",100*($i+1)/$arraylength;
     }
     $process_line = $linearray[$i];
     if($process_line =~ /^($header_cht_exp) ($headr_chs_exp) ($pinyin_exp) ($all_shiyi_exp)$/){
-#        print "Process line is $process_line\n";
+#       print "Process line is $process_line\n";
         $header_cht = $1;
         $header_chs = $2;
         $pinyin = $3;
         $all_shiyi = $4;
-#        print "Header: $header_cht; PinYin: $pinyin; Explanation: $all_shiyi\n";  
+#       print "Header: $header_cht; PinYin: $pinyin; Explanation: $all_shiyi\n";  
         push  @header_cht,$header_cht;
         push  @header_chs,$header_chs;
         push  @pinyin,$pinyin;
         push  @all_shiyi,$all_shiyi;       
     }else{
-#        print "\nUnmatched line is $process_line\n";
+#       print "\nUnmatched line is $process_line\n";
         print LOG_E "$process_line\n";
     }   
         
@@ -120,28 +126,28 @@ my $all_shiyi_length = @all_shiyi;
 
 
 #process main pinyin
-print "\n#####Main PinYin Process:#####\n"	;
+print "\n##### Main PinYin Process #####\n"	;
 my $eachpinyin;
 my $eachpinyined;
 my $py;
 my @pinyin_after;
 for ($py=0;$py<@pinyin;$py++){
     if(($py%500==0)||($py==$pinyin_length-1)){
-    printf "%0.3f ",($py+1)/$pinyin_length;
+    printf "%0.3f% ",100*($py+1)/$pinyin_length;
     }
   $eachpinyin = $pinyin[$py];
   # [xxxxxxx]
   #remove the "[  ]"
-#  print "Convert $eachpinyin\n";
+# print "Convert $eachpinyin\n";
   $eachpinyined = &convertpy_string($eachpinyin);
-#  print "To $eachpinyined\n";
+# print "To $eachpinyined\n";
   push  @pinyin_after, $eachpinyined;
 }
 print "\n";
 
 
 #process explanation pinyin
-print "\n####Explanation PinYin Process:####\n"	;
+print "\n#### Explanation PinYin Process ####\n"	;
 
 my $eachitem;
 my $eachitemed;
@@ -153,34 +159,36 @@ my $m;
 my $n;
 for($m=0;$m<@all_shiyi;$m++){
     if(($m%500==0)||($m==$all_shiyi_length-1)){
-    printf "%0.3f ",($m+1)/$all_shiyi_length;
+    printf "%0.3f% ",100*($m+1)/$all_shiyi_length;
     }
-    $eachitem = $all_shiyi[$m];
-#    print "####convert $eachitem\n";
-    $eachitemed = &convertpy_string($eachitem);
+  $eachitem = $all_shiyi[$m];
+# print "####convert $eachitem\n";
+  $eachitemed = &convertpy_string($eachitem);
 
-#    print "To $eachitemed\n";  
-    push @all_shiyipy_after, $eachitemed;       
+# print "To $eachitemed\n";  
+  push @all_shiyipy_after, $eachitemed;       
      
 }
 print "\n";
 
-print "\n####Explanation Query Process####\n";
+print "\n#### Explanation Query Process ####\n";
 my $all_shiyipy_after_length = @all_shiyipy_after;
-print "Explanation Index before process PinYin is $all_shiyi_length\n";
-print "Explanation Index now is $all_shiyipy_after_length\n";
+print "Explanation Index before is $all_shiyi_length\n";
+print "Explanation Index after is $all_shiyipy_after_length\n";
+
 if($all_shiyipy_after_length!=$all_shiyi_length){
-  die "Explanation Index no match\n";
+  die "Explanation Index No Match\n";
   }else{
-  print "####Continue Process####\n";
+  print "\n#### Continue Process ####\n";
   }
+  
 #process explanation
 # /to split the bill/to go Dutch/
 #first "/"  --> <ul><li>
 #middle "/"  --> </li><li>
 #last "/"   ---> </li></ul>
 #Chinese words --> <a href="entry://key#section">key</a>
-print "\n####Explanation Post Process:####\n"	;
+print "\n#### Explanation Post Process ####\n";
 my $first_rep = '<ul><li>';
 my $middle_rep = '</li><li>';
 my $last_rep = '</li></ul>';
@@ -198,9 +206,9 @@ my @all_shiyi_after;
 my @shiyi_splited;
 for(my $v=0;$v<@all_shiyipy_after;$v++){
     if(($v%500==0)||($v==$all_shiyi_length-1)){
-    printf "%0.3f ",($v+1)/$all_shiyi_length;
+    printf "%0.3f% ",100*($v+1)/$all_shiyi_length;
     }
-#    print "$_\n";
+#   print "$_\n";
     $shiyi = $all_shiyipy_after[$v];
     #replace "," with ", "
     $shiyi =~s/\s*,\s*/, /g;
@@ -209,21 +217,21 @@ for(my $v=0;$v<@all_shiyipy_after;$v++){
     $shiyi =~ s/^(.*)\/$/\1/;
     @shiyi_splited = split /\//, "$shiyi";
     $shiyi = join "$middle_rep" , @shiyi_splited;
-#    print  "1 $shiyi\n";  
-#    deal with start and end of "/" 
+#   print  "1 $shiyi\n";  
+#   deal with start and end of "/" 
     $shiyi =~s/^(.+)$/$first_rep\1$last_rep/;
-#    print  "2 $shiyi\n";
+#   print  "2 $shiyi\n";
     #deal zhongwen to hyperlink
     $shiyi =~s/\b($ch_exp)\b/$hlink_before\1$hlink_middle\1$hlink_end/g;
-#    print  "4 $shiyi\n";
+#   print  "4 $shiyi\n";
     #deal with "()"
     $shiyi =~ s/\(/$bracket_before/g;
     $shiyi =~ s/\)/$bracket_end/g;
     #deal with "[]"
     $shiyi =~ s/\[/$pinyin_before/g;
     $shiyi =~ s/\]/$pinyin_end/g;
-#    print  "7 $shiyi\n";
-#    print REPORT "$shiyi\n";
+#   print  "7 $shiyi\n";
+#   print REPORT "$shiyi\n";
     push @all_shiyi_after, $shiyi;
   }
  
@@ -258,10 +266,10 @@ my $wd_cn;
 my $py;
 my $exp;
 my @total_index;
-print "\n####Tmp File Process:####\n"	;
+print "\n#### Tmp File Process ####\n"	;
 for($j=0;$j<$header_cht_length;$j++){
     if(($j % 500 ==0)||($j==$header_cht_length-1)){
-    printf "%0.3f ",($j+1)/$header_cht_length;
+    printf "%0.3f% ",100*($j+1)/$header_cht_length;
     }
     $wd_tw =  $header_cht[$j];  
     $wd_cn =  $header_chs[$j];  
@@ -293,7 +301,7 @@ print "\nTotal index (may dup) is $total_index\n";
 
 close(TMP);
 
-print "\n####Dup Checking Process:####\n"	;
+print "\n#### Dup Check Process ####\n"	;
 
 open(TD,"tmp_output_dict.txt");
 my $tmp_line;
@@ -323,8 +331,8 @@ print REPORT "No-Dupped index is $dict_nodup_length\n";
 
 
 
-print "\n####Dict Source File Process:####\n";
-print REPORT "\n######Dupped Index#####\n";
+print "\n#### Dict Source File Process ####\n";
+print REPORT "\n###### Dupped Index #####\n";
 foreach (@dup_index){
     $_ =~ s/\^\^\^/\n/g;
     print REPORT "$_\n";
@@ -334,7 +342,7 @@ my @dict_nodup_sorted = sort @dict_nodup;
 my $kk;
 for ($kk=0;$kk<@dict_nodup_sorted;$kk++){
     if(($kk % 500 ==0)||($kk==$dict_nodup_length-1)){
-    printf "%0.3f ",($kk+1)/$dict_nodup_length;
+    printf "%0.3f% ",100*($kk+1)/$dict_nodup_length;
     }
     my $dcit_index = $dict_nodup_sorted[$kk];
     $dcit_index =~ s/\^\^\^/\n/g;
@@ -368,17 +376,17 @@ $string_converting = $string_to_convert;
 AD:
 if($string_converting =~ /(.*)\[([a-zA-Z1-5 \,·]+)\](.*)/){
       $py = $2;
-#      print "Pinyin0 is $py\n";
+#     print "Pinyin0 is $py\n";
       if($pyswitch){
       $pyed = &makepy(lc($py));
       }else{
       $pyed = $py;
       }  
-#      print "Pinyin1 is $pyed\n"; 
-#      print "----$py to $pyed----\n";  
+#     print "Pinyin1 is $pyed\n"; 
+#     print "----$py to $pyed----\n";  
 #     [--^<  ]-->^
       $string_converting =~ s/\[$py\]/\^\<$pyed\>\^/g;
-#      print "--> $string_converting\n";
+#     print "--> $string_converting\n";
       goto AD;     
     }
 #   print "return $string_converting\n";
@@ -413,7 +421,7 @@ my @py_chk = split / /, "$py_chk";
 # print "0: @py_chk\n";    
 foreach (@py_chk){
     $pying = $_;
-#    print "&makepying $pying\n";
+#   print "&makepying $pying\n";
     if($pying =~ /(.*)a(.*)([1-5]+)/){
         $pying =~ s/(.*)a(.*)1/\1ā\2/g;
         $pying =~ s/(.*)a(.*)2/\1á\2/g;
@@ -421,93 +429,93 @@ foreach (@py_chk){
         $pying =~ s/(.*)a(.*)4/\1à\2/g;
         $pying =~ s/(.*)a(.*)5/\1a\2/g;
 #        print "1: $pying\n";
-     }elsif($pying =~ /(.*)e(.*)([1-5]+)/){
+    }elsif($pying =~ /(.*)e(.*)([1-5]+)/){
         $pying =~ s/(.*)e(.*)1/\1ē\2/g;
         $pying =~ s/(.*)e(.*)2/\1é\2/g;
         $pying =~ s/(.*)e(.*)3/\1ě\2/g;
         $pying =~ s/(.*)e(.*)4/\1è\2/g;
         $pying =~ s/(.*)e(.*)5/\1e\2/g; 
 #        print "2: $pying\n";
-     }elsif($pying =~ /(.*)ou(.*)([1-5]+)/){
+    }elsif($pying =~ /(.*)ou(.*)([1-5]+)/){
         $pying =~ s/(.*)ou(.*)1/\1ōu\2/g;
         $pying =~ s/(.*)ou(.*)2/\1óu\2/g;
         $pying =~ s/(.*)ou(.*)3/\1ǒu\2/g;
         $pying =~ s/(.*)ou(.*)4/\1òu\2/g;
         $pying =~ s/(.*)ou(.*)5/\1ou\2/g; 
 #        print "3: $pying\n";
-     }elsif($pying =~ /(.*)io(.*)([1-5]+)/){             
+    }elsif($pying =~ /(.*)io(.*)([1-5]+)/){             
         $pying =~ s/(.*)io(.*)1/\1iō\2/g;
         $pying =~ s/(.*)io(.*)2/\1ió\2/g;
         $pying =~ s/(.*)io(.*)3/\1iǒ\2/g;
         $pying =~ s/(.*)io(.*)4/\1iò\2/g;
         $pying =~ s/(.*)io(.*)5/\1io\2/g; 
-     }elsif($pying =~ /(.*)iu(.*)([1-5]+)/){
+    }elsif($pying =~ /(.*)iu(.*)([1-5]+)/){
         $pying =~ s/(.*)iu(.*)1/\1iū\2/g;
         $pying =~ s/(.*)iu(.*)2/\1iú\2/g;
         $pying =~ s/(.*)iu(.*)3/\1iǔ\2/g;
         $pying =~ s/(.*)iu(.*)4/\1iù\2/g;
         $pying =~ s/(.*)iu(.*)5/\1iu\2/g;                     
-     }elsif($pying =~ /(.*)ui(.*)([1-5]+)/){   
+    }elsif($pying =~ /(.*)ui(.*)([1-5]+)/){   
         $pying =~ s/(.*)ui(.*)1/\1uī\2/g;
         $pying =~ s/(.*)ui(.*)2/\1uí\2/g;
         $pying =~ s/(.*)ui(.*)3/\1uǐ\2/g;
         $pying =~ s/(.*)ui(.*)4/\1uì\2/g;
         $pying =~ s/(.*)ui(.*)5/\1ui\2/g; 
-     }elsif($pying =~ /(.*)uo(.*)([1-5]+)/){       
+    }elsif($pying =~ /(.*)uo(.*)([1-5]+)/){       
         $pying =~ s/(.*)uo(.*)1/\1uō\2/g;
         $pying =~ s/(.*)uo(.*)2/\1uó\2/g;
         $pying =~ s/(.*)uo(.*)3/\1uǒ\2/g;
         $pying =~ s/(.*)uo(.*)4/\1uò\2/g;
         $pying =~ s/(.*)uo(.*)5/\1uo\2/g;  
-     }elsif($pying =~ /(.*)i(.*)([1-5]+)/){   
+    }elsif($pying =~ /(.*)i(.*)([1-5]+)/){   
         $pying =~ s/(.*)i(.*)1/\1ī\2/g;
         $pying =~ s/(.*)i(.*)2/\1í\2/g;
         $pying =~ s/(.*)i(.*)3/\1ǐ\2/g;
         $pying =~ s/(.*)i(.*)4/\1ì\2/g;
         $pying =~ s/(.*)i(.*)5/\1i\2/g;         
-     }elsif($pying =~ /(.*)o(.*)([1-5]+)/){       
+    }elsif($pying =~ /(.*)o(.*)([1-5]+)/){       
         $pying =~ s/(.*)o(.*)1/\1ō\2/g;
         $pying =~ s/(.*)o(.*)2/\1ó\2/g;
         $pying =~ s/(.*)o(.*)3/\1ǒ\2/g;
         $pying =~ s/(.*)o(.*)4/\1ò\2/g;
         $pying =~ s/(.*)o(.*)5/\1o\2/g;          
-     }elsif($pying =~ /(.*)u:(.*)([1-5]+)/){         
+    }elsif($pying =~ /(.*)u:(.*)([1-5]+)/){         
         $pying =~ s/(.*)u:(.*)1/\1ǖ\2/g;
         $pying =~ s/(.*)u:(.*)2/\1ǘ\2/g;
         $pying =~ s/(.*)u:(.*)3/\1ǚ\2/g;
         $pying =~ s/(.*)u:(.*)4/\1ǜ\2/g;
         $pying =~ s/(.*)u:(.*)5/\1ü\2/g;               
-     }elsif($pying =~ /(.*)u(.*)([1-5]+)/){
+    }elsif($pying =~ /(.*)u(.*)([1-5]+)/){
         $pying =~ s/(.*)u(.*)1/\1ū\2/g;
         $pying =~ s/(.*)u(.*)2/\1ú\2/g;
         $pying =~ s/(.*)u(.*)3/\1ǔ\2/g;
         $pying =~ s/(.*)u(.*)4/\1ù\2/g;
         $pying =~ s/(.*)u(.*)5/\1u\2/g; 
-     }elsif($pying =~ /\,/){
+    }elsif($pying =~ /\,/){
         $pying =~ s/\,/\,/g;
-      }elsif($pying =~ /r5/){
+    }elsif($pying =~ /r5/){
         $pying =~ s/r5/r/g;
-      }elsif($pying =~ /xx5/){
+    }elsif($pying =~ /xx5/){
         $pying =~ s/xx5/xx/g;
-      }elsif($pying =~ /[a-z]+/){
-      $pying = uc($pying);                #special for English in Pinyin
-      }elsif($pying =~ /·/){
-      $pying = $pying;                #special for · in Pinyin
-      }elsif($pying =~ /(.*)m(.*)[1-5]+/){
+    }elsif($pying =~ /[a-z]+/){
+        $pying = uc($pying);                #special for English in Pinyin
+    }elsif($pying =~ /·/){
+        $pying = $pying;                #special for · in Pinyin
+    }elsif($pying =~ /(.*)m(.*)[1-5]+/){
         $pying =~ s/(.*)m(.*)2/\1\\u1e3f\2/g;
         $pying =~ s/(.*)m(.*)4/\1m̀\2/g;
-     }else {
+    }else {
         print "Icorrect pattern $pying\n"; 
         print REPORT "Icorrect pattern $pying\n"; 
-     } 
+    } 
      push  @return  ,$pying;
 }
 
   $eachpinyined = join " ", "@return";
   $eachpinyined =~ s/^\s+|\s+$//g;
-#  print "&makepy result $eachpinyined\n";
+# print "&makepy result $eachpinyined\n";
   #add back "[]"
-#  $eachpinyined =~ s/^(.*)$/\[\1\]/g;
+# $eachpinyined =~ s/^(.*)$/\[\1\]/g;
   return ($eachpinyined);
 }
 
