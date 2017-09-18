@@ -1,10 +1,10 @@
 #! /usr/bin/perl
 ######################################################################
 #Author  : Max
-#Date    : 2017-09-11
-#Version : v0p7
+#Date    : 2017-09-18
+#Version : v0p10
 #Usage   : do.pl  source_file(HF)
-#Note	   : read CC-CEDICT source file and make to mdict format
+#Note	   : read CC-CEDICT source file and make mdict format
 #Revision: 
 #         0.01 09.04    initial
 #         0.02 09.05    add process indicator
@@ -15,12 +15,16 @@
 #         0.07 09.16    fix simple English word loop in pinyin 
 #         0.08 09.17    fix nodup issue, add release date print
 #         0.09 09.17    fix words with "·" 
+#         0.10 09.18    add Pinyin convert switch
 #######################################################################
 use strict;
 use utf8::all;
 
 unlink "output_dict.txt";
 unlink "report.log";
+
+#Pinyin convert switch
+my $pyswitch = 1;
 
 my @linearray;						
 my $arraylength;
@@ -129,7 +133,7 @@ for ($py=0;$py<@pinyin;$py++){
   # [xxxxxxx]
   #remove the "[  ]"
 #  print "Convert $eachpinyin\n";
-  $eachpinyined = &convertpy_string(lc($eachpinyin));
+  $eachpinyined = &convertpy_string($eachpinyin);
 #  print "To $eachpinyined\n";
   push  @pinyin_after, $eachpinyined;
 }
@@ -153,7 +157,7 @@ for($m=0;$m<@all_shiyi;$m++){
     }
     $eachitem = $all_shiyi[$m];
 #    print "####convert $eachitem\n";
-    $eachitemed = &convertpy_string(lc($eachitem));
+    $eachitemed = &convertpy_string($eachitem);
 
 #    print "To $eachitemed\n";  
     push @all_shiyipy_after, $eachitemed;       
@@ -365,7 +369,11 @@ AD:
 if($string_converting =~ /(.*)\[([a-zA-Z1-5 \,·]+)\](.*)/){
       $py = $2;
 #      print "Pinyin0 is $py\n";
-      $pyed = &makepy($py);  
+      if($pyswitch){
+      $pyed = &makepy(lc($py));
+      }else{
+      $pyed = $py;
+      }  
 #      print "Pinyin1 is $pyed\n"; 
 #      print "----$py to $pyed----\n";  
 #     [--^<  ]-->^
