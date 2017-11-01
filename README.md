@@ -1,2 +1,2 @@
-# Perl Code for Mess Projects
-My Perl code for text content operation
+# Perl & Python Code for Mess Projects
+My Perl and Python code for text content operation
