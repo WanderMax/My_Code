@@ -3,7 +3,7 @@
 #Author  : Max
 #Date    : 2016-06-28
 #Version : v0.01
-#Usage   : neat_print_mapfile_commt.tl Keyword_file(KW)
+#Usage   : neat_print_mapfile_commt.pl Keyword_file(KW)
 #Note	 : format the layer mapping file from excel, no blank in layer name
 #Revision: 
 #   0.00   06.30    initial
