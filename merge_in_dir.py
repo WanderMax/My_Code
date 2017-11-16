@@ -53,12 +53,13 @@ if os.path.exists(foler_name + '_log.txt'):
 
 fout = open(output_name,'a',encoding='utf-8')
 log = open(foler_name + '_log.txt','a',encoding='utf-8')
-
+j = 0
 for i in file_list:
-  print('processing file:',i)
   try:
+    head = i.replace('.txt','').replace('.1','')
+    print(head)
     file_open = open(source_folder+'/'+i,'r',encoding='utf-8')
-    fout.write(i+'\n')
+    fout.write(head+'\n')
     fout.write(r'<head><meta http-equiv="content-type" content="text/html; charset=utf-8"><link rel="stylesheet" href="aaa.css"/><script type="text/javascript" src="aaa.js"></script></head>'+'\n')
     html = BeautifulSoup(file_open,'html.parser')
 #   add elements to be removed from the file
@@ -77,8 +78,8 @@ for i in file_list:
         del_i.extract()
     html_strings = str(html)   
     comment_lines = re.compile(r'<!--[\s\S]*?-->')
-    blank_lines = re.compile(r'^\s*$',re.M)
-    contents = blank_lines.sub('',comment_lines.sub('',html_strings)).replace('\n','')
+    blank_lines = re.compile(r'>\s+<')
+    contents = blank_lines.sub('><',comment_lines.sub('',html_strings))
 #   remove \n 
     fout.write(contents.strip())
 #   remove all \n in file content
