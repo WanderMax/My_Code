@@ -3,7 +3,7 @@
 #Author  : Max
 #Date    : 2016-06-28
 #Version : v0p1
-#Usage   : neat_print.tl Keyword_file(KW)
+#Usage   : neat_print.pl Keyword_file(KW)
 #Revision: 
 #         0.00 06.28    initial
 
