@@ -2,7 +2,7 @@
 #Author : Max
 #Date   : 2016-07-01
 #Version: v0.00
-#Usage  : dup_del.tl file(LF) 
+#Usage  : dup_del.pl file(LF) 
 #Note   : delete duplicated and blank line of specified document
 
 
